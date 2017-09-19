@@ -1,3 +1,7 @@
+#define RENDER_SOURCE
+#include "common.hh"
+#include RENDER_PRIVATE
+
 #include "protoframe.hh"
 
 using namespace cichlid;

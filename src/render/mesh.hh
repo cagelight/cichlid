@@ -1,6 +1,8 @@
 #pragma once
 
-#include "render_common.hh"
+#define RENDER_HEADER
+#include "common.hh"
+#include RENDER_PUBLIC
 
 namespace cichlid::render::mesh {
 	
@@ -8,6 +10,10 @@ namespace cichlid::render::mesh {
 	void term();
 	
 	enum struct primitive {
+		line_x, // unit line, X positive
+		line_y, // unit line, X positive
+		line_z, // unit line, X positive
+		uqzn, // unit quad, facing Z negative
 		cube
 	};
 	

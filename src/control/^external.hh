@@ -1,13 +1,13 @@
 #pragma once
 
+#define CONTROL_HEADER
 #include "common.hh"
 
-namespace cichlid::render {
+namespace cichlid::control {
 	
 	void init();
 	void term();
 	
-	void preframe();
 	void frame();
 	
 }

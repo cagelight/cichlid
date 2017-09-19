@@ -1,24 +1,14 @@
 #include "core.hh"
 
-#include "control/control.hh"
-#include "render/render.hh"
-#include "game/game.hh"
+#include "common.hh"
+#include BRIDGE_PUBLIC
+#include CONTROL_PUBLIC
+#include GAME_PUBLIC
+#include RENDER_PUBLIC
 
 #include <thread>
 
 using namespace cichlid;
-
-void core::init() {
-	com::init();
-	control::init();
-	render::init();
-}
-
-void core::term() {
-	render::term();
-	control::term();
-	com::term();
-}
 
 void core::exec() {
 	
@@ -27,6 +17,7 @@ void core::exec() {
 	
 	try {
 		com::init();
+		bridge::init();
 		game::init();
 		control::init();
 	
@@ -65,7 +56,8 @@ void core::exec() {
 	} catch (except(startup)) {
 		cilogve("fatal exception occured during startup");
 	}
-	
+
+	bridge::term();
 	control::term();
 	game::term();
 	com::term();

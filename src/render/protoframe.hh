@@ -1,8 +1,10 @@
 #pragma once
 
-#include "render_common.hh"
+#define RENDER_HEADER
+#include "common.hh"
+#include RENDER_PUBLIC
 
-#include "game/game.hh"
+#include GAME_PUBLIC
 #include "game/realm.hh"
 
 #include "object/object.hh"
@@ -17,7 +19,6 @@ namespace cichlid::render {
 		
 		game::perspective pers;
 		std::vector<render::object::cube> cubes;
-		
 	};
 	
 };

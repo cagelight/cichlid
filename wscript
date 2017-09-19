@@ -28,7 +28,8 @@ def configure(ctx):
 	ctx.check(features='c cprogram', lib='pthread', uselib_store='PTHREAD')
 	ctx.check(features='c cprogram', lib='dl', uselib_store='DL')
 	ctx.check(features='c cprogram', lib='asterid', uselib_store='ASTERID')
-	ctx.check(features='c cprogram', lib='glfw', uselib_store='GLFW')
+	ctx.check_cfg(path='pkg-config', args='--cflags --libs', package='freetype2', uselib_store='FT2')
+	ctx.check_cfg(path='sdl2-config', args='--cflags --libs', package='', uselib_store='SDL')
 
 	btup = ctx.options.build_type.upper()
 	if btup in ["DEBUG", "NATIVE", "RELEASE"]:
@@ -48,6 +49,6 @@ def build(bld):
 		features = "cxx cxxprogram",
 		target = coreprog_name,
 		source = bld_files,
-		uselib = ['PTHREAD', 'DL', 'ASTERID', 'GLFW'],
+		uselib = ['PTHREAD', 'DL', 'ASTERID', 'SDL', 'FT2'],
 		includes = [os.path.join(top, 'src')],
 	)
