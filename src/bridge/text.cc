@@ -1,7 +1,3 @@
-#define BRIDGE_SOURCE
-#include "common.hh"
-#include BRIDGE_PRIVATE
-
 #include "text.hh"
 
 #include <asterid/bspacker.hh>
@@ -11,7 +7,7 @@
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
-using namespace cichlid::bridge;
+using namespace ci::bridge;
 
 static FT_Library ft2_lib = nullptr;
 
@@ -22,7 +18,7 @@ static constexpr size_t raster_padding = 1;
 
 void text::init() {
 	if (FT_Init_FreeType(&ft2_lib)) {
-		cilogve("failed to initialize FreeType2");
+		scilogve << "failed to initialize FreeType2";
 		throwe(startup);
 	}
 }

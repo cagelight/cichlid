@@ -1,10 +1,6 @@
-#pragma once
+#include "game.hh"
 
-#define GAME_HEADER
-#include "common.hh"
-#include GAME_PUBLIC
-
-namespace cichlid::game {
+namespace ci::game {
 	
 	struct perspective {
 		vec3_t pos {};

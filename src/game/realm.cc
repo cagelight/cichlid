@@ -1,33 +1,52 @@
-#define GAME_SOURCE
-#include "common.hh"
-#include GAME_PRIVATE
-
 #include "realm.hh"
+#include "game_private.hh"
 
-using namespace cichlid;
-
-game::realm::realm() {
-	//test_pers.pos = vec3_t {-1.7, 1.5, 0.7};
-	test_pers.pos = vec3_t {-2, -1, -4};
+ci::game::realm::realm() {
+	//pers.pos = vec3_t {-1.7, 1.5, 0.7};
+	pers.pos = vec3_t {-2, -1, -4};
 	
+	test_cube tc;
+	
+	std::uniform_real_distribution<double> posr {-10, 10};
+	std::uniform_real_distribution<double> rater {0.25, 1.5};
+	std::uniform_real_distribution<double> colorr {0, 1};
+	std::uniform_real_distribution<double> rotr {0, pi_2 * 4};
+	std::uniform_real_distribution<double> scaler {0.5, 1.5};
+	
+	for (int i = 0; i < 100; i++) {
+		tc.tA.pos = {posr(rng), posr(rng), posr(rng)};
+		vec3_t rotv {colorr(rng), colorr(rng), colorr(rng)};
+		rotv.normalize();
+		tc.tA.rot = {rotv, rotr(rng)};
+		tc.tA.scale = {scaler(rng)};
+		tc.tB.pos = {posr(rng), posr(rng), posr(rng)};
+		rotv = {colorr(rng), colorr(rng), colorr(rng)};
+		rotv.normalize();
+		tc.tB.rot = {rotv, rotr(rng)};
+		tc.tB.scale = {scaler(rng)};
+		tc.crate = rater(rng);
+		tc.cA = {colorr(rng), colorr(rng), colorr(rng)};
+		tc.cB = {colorr(rng), colorr(rng), colorr(rng)};
+		
+		test_cubes.push_back(tc);
+	}
+	
+	/*
 	object::cube testc;
 	testc.trans.pos = vec3_t {0, 0, 0};
 	testc.color = {0, 0.5, 1};
 	
 	cubes.push_back(testc);
+	*/
 	
-	test_pers.vec = quat_t::look_at(test_pers.pos, testc.trans.pos, {0, 1, 0});
+	//pers.vec = quat_t::look_at(pers.pos, testc.trans.pos, {0, 1, 0});
 }
 
-game::realm::~realm() {
-	
-}
-
-void game::realm::frame() {
-	vec3_t wamd = test_pers.vec * ci.direct.axial_move;
-	vec3_t wami = test_pers.vec * ci.impulsed.axial_move;
-	test_pers.pos += wamd * 5;
-	test_pers.pos += wami * globals.impulse * 5;
+void ci::game::realm::frame() {
+	vec3_t wamd = pers.vec * conint.direct.axial_move;
+	vec3_t wami = pers.vec * conint.impulsed.axial_move;
+	pers.pos += wamd * 5;
+	pers.pos += wami * globals.impulse * 5;
 	
 	bool gravity = true;
 	vec3_t gravity_vector = g_gravity_vector;
@@ -38,24 +57,26 @@ void game::realm::frame() {
 	vec3_t axial_z {0, 0, 1};
 	
 	if (gravity) {
-		axial_y = -gravity_vector * test_pers.vec.conjugate();
+		axial_y = -gravity_vector * pers.vec.conjugate();
 	} else {
 		axial_y = {0, 1, 0};
 	}
 	
-	quat_t wx {axial_x, ci.direct.axial_turn.x() + (ci.impulsed.axial_turn.x() * globals.impulse)};
-	quat_t wy {axial_y, ci.direct.axial_turn.y() + (ci.impulsed.axial_turn.y() * globals.impulse)};
-	quat_t wz {axial_z, ci.direct.axial_turn.z() + (ci.impulsed.axial_turn.z() * globals.impulse)};
+	quat_t wx {axial_x, conint.direct.axial_turn.x() + (conint.impulsed.axial_turn.x() * globals.impulse)};
+	quat_t wy {axial_y, conint.direct.axial_turn.y() + (conint.impulsed.axial_turn.y() * globals.impulse)};
+	quat_t wz {axial_z, conint.direct.axial_turn.z() + (conint.impulsed.axial_turn.z() * globals.impulse)};
 	
-	test_pers.vec = (wx * wy * wz) * test_pers.vec;
+	pers.vec = (wx * wy * wz) * pers.vec;
 	if (gravity) {
-		test_pers.vec *= test_pers.vec.roll_up(-gravity_vector, 1);
-		test_pers.vec *= test_pers.vec.range_limit_up(-gravity_vector, 0.99999999999L * pi_h, 1);
+		pers.vec *= pers.vec.roll_up(-gravity_vector, 1);
+		pers.vec *= pers.vec.range_limit_up(-gravity_vector, 0.99999999999L * pi_h, 1);
 	}
 	
-	if (g_log_player_transform) scilogi << test_pers.pos << test_pers.vec;
-}
-
-game::perspective const & game::realm::get_default_perspective() const {
-	return test_pers;
+	for (test_cube & tc : test_cubes) {
+		double lerp = (sin(globals.msec * (tc.crate / 1000)) + 1) / 2;
+		tc.tC = transformation_t::lerp(tc.tA, tc.tB, lerp);
+		tc.cC = b::lerp(tc.cA, tc.cB, lerp);
+	}
+	
+	//if (g_log_player_transform) scilogi << pers.pos << pers.vec;
 }

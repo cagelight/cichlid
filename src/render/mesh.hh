@@ -1,10 +1,8 @@
 #pragma once
 
-#define RENDER_HEADER
-#include "common.hh"
-#include RENDER_PUBLIC
+#include "render.hh"
 
-namespace cichlid::render::mesh {
+namespace ci::render::mesh {
 	
 	void init();
 	void term();
@@ -14,6 +12,7 @@ namespace cichlid::render::mesh {
 		line_y, // unit line, X positive
 		line_z, // unit line, X positive
 		uqzn, // unit quad, facing Z negative
+		fqzn, // fullscreen quad, facing Z negative
 		cube
 	};
 	

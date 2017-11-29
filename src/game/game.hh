@@ -1,20 +1,13 @@
 #pragma once
 
-#define GAME_HEADER
-#include "common.hh"
+#include "common/common.hh"
 
-#include <random>
-
-namespace cichlid::game {
-	
-	struct realm;
+namespace ci::game {
 	
 	void init();
-	void term();
+	void term() noexcept;
 	
 	void frame(as::time::span const &);
-	
-	// CONTROL
 	
 	struct control_interface {
 		struct analog_controls {
@@ -35,7 +28,7 @@ namespace cichlid::game {
 		triggered_controls trigger {};
 	};
 	
-	extern control_interface ci; // reset at the end of each game frame
+	extern control_interface conint;
 	
 	struct globals_t {
 		double impulse = 0;
@@ -50,8 +43,5 @@ namespace cichlid::game {
 	
 	extern globals_t const & globals;
 	
-	// RENDER
-	
-	realm * get_root_realm();
-	
+	struct realm const & get_realm();
 }

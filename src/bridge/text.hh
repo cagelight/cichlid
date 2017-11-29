@@ -1,15 +1,13 @@
 #pragma once
 
-#define BRIDGE_HEADER
-#include "common.hh"
-#include BRIDGE_PUBLIC
+#include "bridge.hh"
 
 /**
  * This should be a temporary text system, just something basic that can do ASCII.
  * I'll mess with all that fontconfig and international crap later...
  */
 
-namespace cichlid::bridge::text {
+namespace ci::bridge::text {
 	
 	void init();
 	void term() noexcept;
@@ -18,7 +16,7 @@ namespace cichlid::bridge::text {
 	 * single channel, 8-bit per pixel
 	 */
 	struct atlas_image {
-		as::byte_buffer data;
+		as::buffer_assembly data;
 		rect_t size;
 	};
 	

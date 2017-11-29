@@ -1,31 +1,25 @@
-#pragma once
+#include "game.hh"
 
-#define GAME_HEADER
-#include "common.hh"
-#include GAME_PUBLIC
-
+#include "amun_vcw/amun_vcw.hh"
 #include "perspective.hh"
-#include "object/cube.hh"
 
-#include "bridge/text.hh"
-
-#include <list>
-
-namespace cichlid::game {
+namespace ci::game {
 	
+	struct test_cube {
+		transformation_t tA, tB, tC;
+		double crate = 1;
+		vec3_t cA, cB, cC;
+	};
+
 	struct realm {
+		perspective pers;
 		
-		perspective test_pers {};
-		std::list<object::cube> cubes;
-		bridge::text::string test_string;
+		std::vector<test_cube> test_cubes;
+		amun::world world;
 		
 		realm();
-		~realm();
 		
 		void frame();
-		
-		perspective const & get_default_perspective() const;
-		
 	};
 	
-}
+};

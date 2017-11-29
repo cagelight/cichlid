@@ -1,9 +1,9 @@
 #pragma once
 
-#include "gl_common.hh"
+#include "glad.h"
 #include <SDL2/SDL.h>
 
-namespace cichlid::sdl {
+namespace ci::sdl2 {
 	
 	extern SDL_Window * win;
 	extern SDL_Surface * surface;

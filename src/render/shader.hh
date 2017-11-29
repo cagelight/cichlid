@@ -1,8 +1,6 @@
 #pragma once
 
-#define RENDER_HEADER
-#include "common.hh"
-#include RENDER_PUBLIC
+#include "render.hh"
 
 // VAO binding
 #define SHADER_LOCATION_VERTEX 0 // 3 float
@@ -20,19 +18,29 @@
 // BINDINGS
 #define SHADER_BINDING_UBUF 0
 #define SHADER_BINDING_DIFFUSE 1
+#define SHADER_BINDING_DEPTH 2
+#define SHADER_BINDING_POSITION 3
+#define SHADER_BINDING_NORMAL 4
 
-namespace cichlid::render::shader {
+namespace ci::render::shader {
 	
 	void init();
 	void term();
 	
 	enum struct type {
 		basic,
+		dbasic,
+		fbofinish,
 		line,
 		text
 	};
 	
 	struct basic {
+		b::mat4_t<float> m {};
+		b::vec4_t<float> color {};
+	};
+	
+	struct dbasic {
 		b::mat4_t<float> m {};
 		b::vec4_t<float> color {};
 	};
@@ -51,6 +59,7 @@ namespace cichlid::render::shader {
 	
 	void bind(type);
 	void upload(basic const &);
+	void upload(dbasic const &);
 	void upload(line const &);
 	void upload(text const &);
 	

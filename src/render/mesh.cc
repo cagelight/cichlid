@@ -1,10 +1,5 @@
-#define RENDER_SOURCE
-#include "common.hh"
-#include RENDER_PRIVATE
-
 #include "mesh.hh"
-
-using namespace cichlid;
+#include "render_private.hh"
 
 static GLfloat const line_x_v [] = {
 	0.0,	0.0,	0.0,
@@ -26,6 +21,13 @@ static GLfloat const uqzn_v [] = { // TRIANGLE FAN
 	0.0,	1.0,	0.0,
 	1.0,	0.0,	0.0,
 	0.0,	0.0,	0.0,
+};
+
+static GLfloat const fqzn_v [] = { // TRIANGLE FAN
+	1.0,	1.0,	0.0,
+	-1.0,	1.0,	0.0,
+	1.0,	-1.0,	0.0,
+	-1.0,	-1.0,	0.0,
 };
 
 static GLfloat const uq_uv [] = {
@@ -68,9 +70,10 @@ static GLuint line_z_vao = 0, line_z_vbo = 0;
 
 static GLuint prim_uq_uv_vbo = 0;
 static GLuint prim_uqzn_vao = 0, prim_uqzn_vbo = 0;
+static GLuint prim_fqzn_vao = 0, prim_fqzn_vbo = 0;
 static GLuint prim_cube_vao = 0, prim_cube_vbo = 0;
 
-void render::mesh::init() {
+void ci::render::mesh::init() {
 	
 	// LINE
 	glCreateVertexArrays(1, &line_x_vao);
@@ -118,6 +121,20 @@ void render::mesh::init() {
 	glEnableVertexArrayAttrib(prim_uqzn_vao, 1);
 	glVertexArrayAttribFormat(prim_uqzn_vao, 1, 2, GL_FLOAT, GL_FALSE, 0);
 	
+	// FQZN
+	glCreateVertexArrays(1, &prim_fqzn_vao);
+	glCreateBuffers(1, &prim_fqzn_vbo);
+	glNamedBufferData( prim_fqzn_vbo, sizeof(fqzn_v), fqzn_v, GL_STATIC_DRAW);
+	
+	glVertexArrayAttribBinding(prim_fqzn_vao, 0, 0);
+	glVertexArrayVertexBuffer(prim_fqzn_vao, 0, prim_fqzn_vbo, 0, 3 * sizeof(GLfloat));
+	glEnableVertexArrayAttrib(prim_fqzn_vao, 0);
+	glVertexArrayAttribFormat(prim_fqzn_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(prim_fqzn_vao, 1, 1);
+	glVertexArrayVertexBuffer(prim_fqzn_vao, 1, prim_uq_uv_vbo, 0, 2 * sizeof(GLfloat));
+	glEnableVertexArrayAttrib(prim_fqzn_vao, 1);
+	glVertexArrayAttribFormat(prim_fqzn_vao, 1, 2, GL_FLOAT, GL_FALSE, 0);
+	
 	// CUBE
 	glCreateVertexArrays(1, &prim_cube_vao);
 	glCreateBuffers(1, &prim_cube_vbo);
@@ -129,7 +146,7 @@ void render::mesh::init() {
 	glVertexArrayAttribFormat(prim_cube_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
 }
 
-void render::mesh::term() {
+void ci::render::mesh::term() {
 	if (line_x_vao) glDeleteVertexArrays(1, &line_x_vao);
 	if (line_x_vbo) glDeleteBuffers(1, &line_x_vbo);
 	if (line_y_vao) glDeleteVertexArrays(1, &line_y_vao);
@@ -138,6 +155,8 @@ void render::mesh::term() {
 	if (line_z_vbo) glDeleteBuffers(1, &line_z_vbo);
 	if (prim_uqzn_vao) glDeleteVertexArrays(1, &prim_uqzn_vao);
 	if (prim_uqzn_vbo) glDeleteBuffers(1, &prim_uqzn_vbo);
+	if (prim_fqzn_vao) glDeleteVertexArrays(1, &prim_fqzn_vao);
+	if (prim_fqzn_vbo) glDeleteBuffers(1, &prim_fqzn_vbo);
 	if (prim_cube_vao) glDeleteVertexArrays(1, &prim_cube_vao);
 	if (prim_cube_vbo) glDeleteBuffers(1, &prim_cube_vbo);
 	if (prim_uq_uv_vbo) glDeleteBuffers(1, &prim_uq_uv_vbo);
@@ -145,13 +164,15 @@ void render::mesh::term() {
 	line_x_vbo = 0;
 	prim_uqzn_vao = 0;
 	prim_uqzn_vbo = 0;
+	prim_fqzn_vao = 0;
+	prim_fqzn_vbo = 0;
 	prim_cube_vao = 0;
 	prim_cube_vbo = 0;
 }
 
-static render::mesh::primitive bound;
+static ci::render::mesh::primitive bound;
 
-void render::mesh::bind(primitive prim) {
+void ci::render::mesh::bind(primitive prim) {
 	switch (prim) {
 		case primitive::line_x:
 			glBindVertexArray(line_x_vao);
@@ -165,6 +186,9 @@ void render::mesh::bind(primitive prim) {
 		case primitive::uqzn:
 			glBindVertexArray(prim_uqzn_vao);
 			break;
+		case primitive::fqzn:
+			glBindVertexArray(prim_fqzn_vao);
+			break;
 		case primitive::cube:
 			glBindVertexArray(prim_cube_vao);
 			break;
@@ -174,7 +198,7 @@ void render::mesh::bind(primitive prim) {
 	bound = prim;
 }
 
-void render::mesh::draw() {
+void ci::render::mesh::draw() {
 	switch (bound) {
 		case primitive::line_x:
 		case primitive::line_y:
@@ -183,6 +207,9 @@ void render::mesh::draw() {
 			break;
 		case primitive::uqzn:
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, sizeof(uqzn_v) / sizeof(GLfloat) / 3);
+			break;
+		case primitive::fqzn:
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, sizeof(fqzn_v) / sizeof(GLfloat) / 3);
 			break;
 		case primitive::cube:
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, sizeof(cube_v) / sizeof(GLfloat) / 3);

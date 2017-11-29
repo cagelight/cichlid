@@ -1,13 +1,10 @@
-#define RENDER_SOURCE
-#include "common.hh"
-#include RENDER_PRIVATE
-
 #include "shader.hh"
+#include "render_private.hh"
 
 #define SS(v) _SS(v)
 #define _SS(v) #v
 
-namespace cichlid::render::shader {
+namespace ci::render::shader {
 	struct stage final {
 		GLuint id;
 		stage(GLenum type) : id(glCreateShader(type)) {}
@@ -48,9 +45,6 @@ namespace cichlid::render::shader {
 	};
 }
 
-using namespace cichlid::render;
-
-
 // BASIC
 
 static char const basic_v_src [] = R"SHAD(
@@ -72,6 +66,62 @@ static char const basic_f_src [] = R"SHAD(
 	out vec4 frag_color;
 	void main() {
 		frag_color = color;
+	};
+)SHAD";
+
+// DEFERRED BASIC
+
+static char const dbasic_v_src [] = R"SHAD(
+	#version 450 core
+	layout(location = )SHAD" SS(SHADER_LOCATION_VERTEX) R"SHAD() in vec3 pos;
+	layout(location = )SHAD" SS(SHADER_LOCATION_UV) R"SHAD() in vec2 uv_in;
+	layout(location = )SHAD" SS(SHADER_LOCATION_NORMAL) R"SHAD() in vec3 normal_in;
+	layout(location = )SHAD" SS(SHADER_LOCATION_MVP) R"SHAD() uniform mat4 mvp;
+	out vec2 uv;
+	out vec3 normal;
+	out vec3 position;
+	void main() {
+		uv = uv_in;
+		normal = normal_in;
+		gl_Position = mvp * vec4(pos, 1);
+		position = vec3(1, 1, 0);
+	};
+)SHAD";
+	
+static char const dbasic_f_src [] = R"SHAD(
+	#version 450 core
+	in vec2 uv;
+	in vec3 normal;
+	in vec3 position;
+	layout(location = )SHAD" SS(SHADER_LOCATION_COLOR) R"SHAD() uniform vec4 color;
+	layout(location = 0) out vec4 frag_color;
+	layout(location = 1) out vec4 frag_position;
+	void main() {
+		frag_color = color;
+		frag_position = vec4(position, 1);
+	};
+)SHAD";
+
+// FBOFINISH
+
+static char const fbofinish_v_src [] = R"SHAD(
+	#version 450 core
+	layout(location = )SHAD" SS(SHADER_LOCATION_VERTEX) R"SHAD() in vec3 pos;
+	layout(location = )SHAD" SS(SHADER_LOCATION_UV) R"SHAD() in vec2 uv_in;
+	out vec2 uv;
+	void main() {
+		uv = uv_in;
+		gl_Position = vec4(pos, 1);
+	};
+)SHAD";
+	
+static char const fbofinish_f_src [] = R"SHAD(
+	#version 450 core
+	in vec2 uv;
+	layout(binding = )SHAD" SS(SHADER_BINDING_DIFFUSE) R"SHAD() uniform sampler2D diffuse;
+	out vec4 frag_color;
+	void main() {
+		frag_color = texture(diffuse, uv);
 	};
 )SHAD";
 
@@ -125,53 +175,67 @@ static char const text_f_src [] = R"SHAD(
 	};
 )SHAD";
 	
-static std::unique_ptr<shader::program> basic_prog;
-static std::unique_ptr<shader::program> line_prog;
-static std::unique_ptr<shader::program> text_prog;
+static std::unique_ptr<ci::render::shader::program> basic_prog;
+static std::unique_ptr<ci::render::shader::program> dbasic_prog;
+static std::unique_ptr<ci::render::shader::program> fbofinish_prog;
+static std::unique_ptr<ci::render::shader::program> line_prog;
+static std::unique_ptr<ci::render::shader::program> text_prog;
 
-static std::unique_ptr<shader::program> setup_program(char const * name, char const * v_src, char const * f_src) {
+static std::unique_ptr<ci::render::shader::program> setup_program(char const * name, char const * v_src, char const * f_src) {
 	std::string complog;
 	
-	shader::stage v_shad {GL_VERTEX_SHADER};
+	ci::render::shader::stage v_shad {GL_VERTEX_SHADER};
 	v_shad.source(v_src);
 	if (!v_shad.compile(complog)) {
-		cilogve("%s vertex shader failed to compile:\n%s", name, complog.c_str());
+		scilogve << as::strf("%s vertex shader failed to compile:\n%s", name, complog.c_str());
 	}
 	
-	shader::stage f_shad {GL_FRAGMENT_SHADER};
+	ci::render::shader::stage f_shad {GL_FRAGMENT_SHADER};
 	f_shad.source(f_src);
 	if (!f_shad.compile(complog)) {
-		cilogve("%s fragment shader failed to compile:\n%s", name, complog.c_str());
+		scilogve << as::strf("%s fragment shader failed to compile:\n%s", name, complog.c_str());
 	}
 	
-	std::unique_ptr<shader::program> prog {new shader::program {}};
+	std::unique_ptr<ci::render::shader::program> prog {new ci::render::shader::program {}};
 	prog->attach(v_shad);
 	prog->attach(f_shad);
 	if (!prog->link(complog)) {
-		cilogve("%s shader program failed to link:\n%s", name, complog.c_str());
+		scilogve << as::strf("%s shader program failed to link:\n%s", name, complog.c_str());
 	}
 	return prog;
 }
 
 #define SETUP_SHADER(name) name##_prog = setup_program(#name, name##_v_src, name##_f_src)
 
-void shader::init() {
+void ci::render::shader::init() {
 	SETUP_SHADER(basic);
+	SETUP_SHADER(dbasic);
+	SETUP_SHADER(fbofinish);
 	SETUP_SHADER(line);
 	SETUP_SHADER(text);
 }
 
-void shader::term() {
+void ci::render::shader::term() {
 	basic_prog.reset();
+	dbasic_prog.reset();
+	fbofinish_prog.reset();
 	line_prog.reset();
 	text_prog.reset();
 }
 
-void shader::bind(shader::type t) {
+void ci::render::shader::bind(shader::type t) {
 	switch (t) {
 		case shader::type::basic:
 			glBlendFunc(GL_ONE, GL_ZERO);
 			glUseProgram(basic_prog->id);
+			break;
+		case shader::type::dbasic:
+			glBlendFunc(GL_ONE, GL_ZERO);
+			glUseProgram(dbasic_prog->id);
+			break;
+		case shader::type::fbofinish:
+			glBlendFunc(GL_ONE, GL_ZERO);
+			glUseProgram(fbofinish_prog->id);
 			break;
 		case shader::type::line:
 			glBlendFunc(GL_ONE, GL_ZERO);
@@ -186,17 +250,22 @@ void shader::bind(shader::type t) {
 	}
 }
 
-void shader::upload(shader::basic const & b) {
+void ci::render::shader::upload(shader::basic const & b) {
 	glUniformMatrix4fv(SHADER_LOCATION_MVP, 1, GL_FALSE, b.m);
 	glUniform4f(SHADER_LOCATION_COLOR, b.color[0], b.color[1], b.color[2], b.color[3]);
 }
 
-void shader::upload(shader::line const & b) {
+void ci::render::shader::upload(shader::dbasic const & b) {
 	glUniformMatrix4fv(SHADER_LOCATION_MVP, 1, GL_FALSE, b.m);
 	glUniform4f(SHADER_LOCATION_COLOR, b.color[0], b.color[1], b.color[2], b.color[3]);
 }
 
-void shader::upload(shader::text const & b) {
+void ci::render::shader::upload(shader::line const & b) {
+	glUniformMatrix4fv(SHADER_LOCATION_MVP, 1, GL_FALSE, b.m);
+	glUniform4f(SHADER_LOCATION_COLOR, b.color[0], b.color[1], b.color[2], b.color[3]);
+}
+
+void ci::render::shader::upload(shader::text const & b) {
 	glUniformMatrix4fv(SHADER_LOCATION_MVP, 1, GL_FALSE, b.m);
 	glUniform4f(SHADER_LOCATION_COLOR, b.color[0], b.color[1], b.color[2], b.color[3]);
 	glUniform2f(SHADER_LOCATION_OFFS2D, b.rect[0], b.rect[1]);

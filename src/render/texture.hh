@@ -1,14 +1,10 @@
 #pragma once
 
-#define RENDER_HEADER
-#include "common.hh"
-#include RENDER_PRIVATE
+#include "render_private.hh"
 
-#include <asterid/byte_buffer.hh>
+#include <asterid/buffer_assembly.hh>
 
-#include <memory>
-
-namespace cichlid::render::texture {
+namespace ci::render::texture {
 	
 	void init();
 	void term();
@@ -27,7 +23,9 @@ namespace cichlid::render::texture {
 	typedef std::shared_ptr<cache> sptr;
 	typedef std::weak_ptr<cache> wptr;
 	
-	sptr reg(uint_fast16_t width, uint_fast16_t height, as::byte_buffer const & data);
+	sptr reg(uint_fast16_t width, uint_fast16_t height, GLuint format);
+	sptr reg(uint_fast16_t width, uint_fast16_t height, as::buffer_assembly const & data, GLuint format, GLuint data_layout, GLuint data_type); /* GL_R8, GL_RED, GL_UNSIGNED_BYTE */
+	
 	void markfordelete(sptr);
 	
 }
